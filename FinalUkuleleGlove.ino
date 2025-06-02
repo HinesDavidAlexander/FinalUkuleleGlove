@@ -59,7 +59,7 @@ unsigned long lastFingerDebounceTime[numFingers]; // Stores time of last raw sta
 // =================== Setup & Loop Methods ====================
 
 void setup() {
-  Serial.begin(2); // Initialize serial communication for debugging
+  Serial.begin(9600); // Initialize serial communication for debugging
 
   for (int i = 0; i < numFingers; i++) {
     pinMode(fingerPins[i], INPUT_PULLUP);
