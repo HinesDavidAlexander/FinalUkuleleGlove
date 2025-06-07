@@ -1,7 +1,7 @@
 // Written by: Alex Hines
 // 'Ukulele Synth Glove' project
 // Date: 5/26/2025
-
+#include <Adafruit_NeoPixel.h>
 // ====================== Finger settings ======================
 // Define the pins for the fingers
 const int fingerPin1 = 10;  // Pin for G (Index Finger)
@@ -15,6 +15,20 @@ const int numFingers = 4;
 // Variable to track which finger's note is currently playing
 // -1 means no note is playing for that finger. This system plays one note at a time. [Area of potential future improvement - multiple notes at one time]
 int currentlyPlayingFinger = -1;
+
+// ======================= NeoPixel settings ===================== // <<< CHANGED
+// Pin for the onboard NeoPixel.
+const int NEOPIXEL_PIN = 8;
+// Create the NeoPixel object globally so it can be used in any function.
+Adafruit_NeoPixel strip = Adafruit_NeoPixel(1, NEOPIXEL_PIN, NEO_GRB + NEO_KHZ800); // <<< CHANGED
+
+// Define colors for each finger (G, C, E, A) - Red, Green, Blue, Yellow
+uint32_t fingerColors[] = { // <<< CHANGED
+  strip.Color(255, 0, 0),    // Index finger (G) -> Red
+  strip.Color(0, 255, 0),    // Middle finger (C) -> Green
+  strip.Color(0, 0, 255),    // Ring finger (E) -> Blue
+  strip.Color(255, 255, 0)   // Pinky finger (A) -> Yellow
+};
 
 // ======================= Note settings =======================
 // Define the pin for the buzzer (SDA pin, usable as general I/O)
@@ -61,6 +75,10 @@ unsigned long lastFingerDebounceTime[numFingers]; // Stores time of last raw sta
 void setup() {
   Serial.begin(9600); // Initialize serial communication for debugging
 
+  strip.begin();                                  // <<< CHANGED
+  strip.setBrightness(50);                        // <<< CHANGED
+  strip.show(); // Initialize all pixels to 'off' // <<< CHANGED
+  
   for (int i = 0; i < numFingers; i++) {
     pinMode(fingerPins[i], INPUT_PULLUP);
     // Initialize finger debouncing variables
@@ -179,6 +197,10 @@ void handleFingerPresses() {
       Serial.print("Playing Finger ");
       Serial.print(fingerToPlay + 1); 
       Serial.print(" (Note: ");
+
+      // Set the NeoPixel color based on which finger is playing
+      strip.setPixelColor(0, fingerColors[fingerToPlay]); // <<< CHANGED
+      strip.show();                                       // <<< CHANGED
       
       if(fingerToPlay == 0) Serial.print("G");
       else if(fingerToPlay == 1) Serial.print("C");
@@ -186,11 +208,16 @@ void handleFingerPresses() {
       else if(fingerToPlay == 3) Serial.print("A");
       Serial.print(") at Freq: ");
       Serial.println(frequency);
+      Serial.print("With Color: ");
+      Serial.println(fingerColors[fingerToPlay]);
     }
   } else { // No finger is pressed
     if (currentlyPlayingFinger != -1) { // If a note was playing, stop it
       noTone(buzzerPin);
       Serial.println("Stopping tone");
+      // Turn the NeoPixel off
+      strip.clear();                   // <<< CHANGED
+      strip.show();                    // <<< CHANGED
       currentlyPlayingFinger = -1; 
     }
   }
